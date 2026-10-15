@@ -1,0 +1,93 @@
+{
+  "name": "norns-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for Norns — durable agent runtime on BEAM",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nornscode/norns-sdk-typescript.git"
+  },
+  "homepage": "https://github.com/nornscode/norns-sdk-typescript#readme",
+  "bugs": "https://github.com/nornscode/norns-sdk-typescript/issues",
+  "keywords": [
+    "norns",
+    "agents",
+    "durable-execution",
+    "llm",
+    "ai",
+    "workflow"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "prepublishOnly": "npm run lint && npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "ai": "^7.0.0",
+    "phoenix": "^1.8.0"
+  },
+  "peerDependencies": {
+    "@ai-sdk/anthropic": ">=4.0.0",
+    "@ai-sdk/google": ">=4.0.0",
+    "@ai-sdk/mistral": ">=4.0.0",
+    "@ai-sdk/openai": ">=4.0.0",
+    "zod": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@ai-sdk/anthropic": {
+      "optional": true
+    },
+    "@ai-sdk/google": {
+      "optional": true
+    },
+    "@ai-sdk/mistral": {
+      "optional": true
+    },
+    "@ai-sdk/openai": {
+      "optional": true
+    },
+    "zod": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@ai-sdk/anthropic": "^4.0.0",
+    "@biomejs/biome": "^2.5.0",
+    "@types/node": "^22.0.0",
+    "@types/phoenix": "^1.6.0",
+    "tsup": "^9.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^5.0.0",
+    "zod": "^4.0.0"
+  }
+}
