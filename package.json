@@ -50,7 +50,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "prepublishOnly": "npm run lint && npm run typecheck && npm test && npm run build"
+    "prepublishOnly": "npm run lint && npm run typecheck && npm test && npm run build",
+    "prepare": "tsup"
   },
   "dependencies": {
     "ai": "^7.0.0",
