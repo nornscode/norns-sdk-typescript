@@ -4,7 +4,7 @@
  * Skipped otherwise.
  */
 import { randomBytes } from "node:crypto";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { DEFAULT_MODEL, defineAgent, NornsClient, NornsWorker, tool } from "../src/index.js";
 
@@ -14,9 +14,13 @@ const model = process.env.NORNS_TEST_MODEL ?? DEFAULT_MODEL;
 const haveLlmKey = Boolean(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY);
 
 describe.skipIf(!url || !apiKey)("integration", () => {
-  const client = new NornsClient({ url, apiKey });
+  let client: NornsClient;
   const name = `ts-sdk-${randomBytes(4).toString("hex")}`;
   const workers: NornsWorker[] = [];
+
+  beforeAll(() => {
+    client = new NornsClient({ url, apiKey });
+  });
 
   afterAll(async () => {
     await Promise.all(workers.map((w) => w.stop()));

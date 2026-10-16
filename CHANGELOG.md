@@ -2,7 +2,7 @@
 
 All notable changes to `norns-sdk` are documented in this file.
 
-## [0.1.0] - Unreleased
+## [0.1.0] - 2026-10-15
 
 ### Added
 - `NornsWorker`: connects over Phoenix Channels (phoenix.js), registers agents
