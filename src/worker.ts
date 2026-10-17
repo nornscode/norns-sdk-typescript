@@ -28,6 +28,7 @@ import {
   toModelMessages,
   toToolSet,
 } from "./format.js";
+import { HistoryCache } from "./history-cache.js";
 import { type Logger, resolveLogger } from "./logger.js";
 import { type ModelResolver, type ModelsOption, toResolver } from "./models.js";
 import {
@@ -133,6 +134,7 @@ export class NornsWorker {
   readonly #client: NornsClient;
   readonly #resolveModel: ModelResolver;
   readonly #inFlight = new Set<InFlight>();
+  readonly #history = new HistoryCache();
 
   #state: WorkerState = "idle";
   #socket: Socket | undefined;
@@ -254,7 +256,12 @@ export class NornsWorker {
     });
     this.#socket = socket;
 
-    socket.onOpen(() => this.#logger.info(`Connected to ${this.url}`));
+    socket.onOpen(() => {
+      this.#logger.info(`Connected to ${this.url}`);
+      // Norns sends deltas only on the connection it sent the history on, so
+      // a new connection starts with nothing to be stale.
+      this.#history.clear();
+    });
     socket.onError((err) => {
       if (this.#state === "starting" || this.#state === "running") {
         this.#logger.warn(`Connection error (${errorMessage(err)}); retrying`);
@@ -325,6 +332,9 @@ export class NornsWorker {
       worker_id: this.workerId,
       tools: [...this.#tools.values()].map(toolRegistration),
       capabilities: this.#capabilities,
+      // This worker keeps the history it was last sent per run, so Norns may
+      // send later steps as the change only (HistoryCache).
+      features: ["message_cache"],
     };
     if (this.gard !== undefined) {
       params.gard = this.gard;
@@ -482,7 +492,16 @@ export class NornsWorker {
       );
   }
 
-  async #runLlm(task: LlmTask, signal: AbortSignal): Promise<LlmResult> {
+  async #runLlm(received: LlmTask, signal: AbortSignal): Promise<LlmResult> {
+    const task = this.#history.resolve(received);
+    if (task === undefined) {
+      // The delta was built on a history this worker no longer holds. Norns
+      // resends the whole list at the same step; no retry counted.
+      this.#logger.info(
+        "LLM task arrived as a delta on an unknown base; asking for the full history",
+      );
+      return { status: "error", error: "message_cache_miss" };
+    }
     const model = task.model ?? "?";
     const tools = task.tools ?? [];
     this.#logger.info(

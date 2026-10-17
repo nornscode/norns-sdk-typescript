@@ -73,6 +73,7 @@ describe("joining", () => {
     expect(ws.joinPayload()).toEqual({
       worker_id: "w1",
       capabilities: ["llm", "tools"],
+      features: ["message_cache"],
       tools: [
         {
           name: "echo",
