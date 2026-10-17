@@ -51,6 +51,8 @@ export interface LlmTask {
   summary?: string | null;
   date?: string | null;
   messages?: NeutralMessage[];
+  /** In place of `messages` once this worker holds the run's history (see HistoryCache). */
+  messages_delta?: { base_count: number; drop: number; append: NeutralMessage[] };
   tools?: NeutralTool[];
   context_policy?: unknown;
   max_tokens?: number | null;
