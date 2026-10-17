@@ -2,7 +2,7 @@
 
 All notable changes to `norns-sdk` are documented in this file.
 
-## [Unreleased]
+## [0.2.0] - 2026-10-16
 
 ### Added
 - The worker joins with `features: ["message_cache"]` and keeps the message
