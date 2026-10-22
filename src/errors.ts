@@ -59,6 +59,14 @@ export class GardDestroyedError extends NornsError {
   }
 }
 
+/** The scoped key this worker joined on was revoked while it was connected. */
+export class KeyRevokedError extends NornsError {
+  constructor() {
+    super("the worker's scoped key was revoked");
+    this.name = "KeyRevokedError";
+  }
+}
+
 /** A stream's socket closed before the run reached a terminal event. */
 export class StreamClosedError extends NornsError {
   readonly reason: unknown;

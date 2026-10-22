@@ -14,6 +14,7 @@ export {
 } from "./agent.js";
 export {
   type AgentRef,
+  isScopedKey,
   type ListRunsOptions,
   NornsClient,
   type NornsClientOptions,
@@ -24,6 +25,7 @@ export {
 export {
   GardDestroyedError,
   JoinError,
+  KeyRevokedError,
   NornsApiError,
   NornsError,
   NornsTimeoutError,

@@ -3,6 +3,7 @@ import { generateText } from "ai";
 import { type Channel, Socket, type SocketConnectOption } from "phoenix";
 import { type AgentDefinition, agentList, toolsByName } from "./agent.js";
 import {
+  isScopedKey,
   NornsClient,
   resolveApiKey,
   resolveUrl,
@@ -11,7 +12,13 @@ import {
   wsBase,
 } from "./client.js";
 import { CompletedCalls, completedCallsPath } from "./completed-calls.js";
-import { errorMessage, GardDestroyedError, JoinError, NornsError } from "./errors.js";
+import {
+  errorMessage,
+  GardDestroyedError,
+  JoinError,
+  KeyRevokedError,
+  NornsError,
+} from "./errors.js";
 import {
   compactionMessages,
   composeCompactionPrompt,
@@ -45,7 +52,11 @@ export interface NornsWorkerOptions {
   agents: AgentDefinition | AgentDefinition[];
   /** The Norns base URL. Defaults to `NORNS_URL`. */
   url?: string;
-  /** The tenant's bearer token. Defaults to `NORNS_API_KEY`. */
+  /**
+   * The bearer token. Defaults to `NORNS_API_KEY`. A scoped worker key
+   * (`nrnw_...`) joins without registering the agents, since it cannot reach
+   * the REST API; register the definitions with a tenant key.
+   */
   apiKey?: string;
   /**
    * How a model name on an LLM task becomes a model to call: a function, a
@@ -221,9 +232,15 @@ export class NornsWorker {
   }
 
   async #start(): Promise<void> {
-    for (const agent of this.#agents) {
-      const info = await this.#client.agents.ensure(agent);
-      this.#logger.info(`Registered agent '${agent.name}' (id=${info.id})`);
+    if (isScopedKey(this.#apiKey)) {
+      this.#logger.info(
+        "Worker key is scoped (nrnw_): skipping agent registration. Register the agent definitions with a tenant key.",
+      );
+    } else {
+      for (const agent of this.#agents) {
+        const info = await this.#client.agents.ensure(agent);
+        this.#logger.info(`Registered agent '${agent.name}' (id=${info.id})`);
+      }
     }
 
     if (this.#capabilities.includes("llm")) {
@@ -287,6 +304,10 @@ export class NornsWorker {
     channel.on("gard_destroyed", () => {
       this.#logger.error("This worker's gard was destroyed; shutting down");
       this.#fail(new GardDestroyedError(this.gard));
+    });
+    channel.on("key_revoked", () => {
+      this.#logger.error("This worker's key was revoked; shutting down");
+      this.#fail(new KeyRevokedError());
     });
     channel.onError((reason) => {
       if (this.#state === "running")
