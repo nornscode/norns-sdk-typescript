@@ -450,6 +450,15 @@ export function resolveApiKey(apiKey: string | undefined): string {
   return value;
 }
 
+/**
+ * A key issued by `POST /api/v1/api_keys` with a worker scope (`nrnw_...`).
+ * It opens the worker socket and nothing else, so a worker holding one must
+ * not try the REST API.
+ */
+export function isScopedKey(apiKey: string): boolean {
+  return apiKey.startsWith("nrnw_");
+}
+
 export function wsBase(url: string): string {
   return url.replace(/^http:\/\//, "ws://").replace(/^https:\/\//, "wss://");
 }

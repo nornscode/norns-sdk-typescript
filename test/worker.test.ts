@@ -9,6 +9,7 @@ import {
   defineAgent,
   GardDestroyedError,
   JoinError,
+  KeyRevokedError,
   NornsWorker,
   type NornsWorkerOptions,
   type ToolContext,
@@ -629,6 +630,46 @@ describe("connection loss", () => {
     FakeWebSocket.last.push("gard_destroyed", {});
     await expect(worker.stopped).rejects.toBeInstanceOf(GardDestroyedError);
     expect(worker.state).toBe("stopped");
+  });
+
+  it("stops with KeyRevokedError when its key is revoked", async () => {
+    const { worker } = makeWorker(defineAgent({ name: "t" }), { apiKey: "nrnw_box" });
+    await worker.start();
+    FakeWebSocket.last.push("key_revoked", {});
+    await expect(worker.stopped).rejects.toBeInstanceOf(KeyRevokedError);
+    expect(worker.state).toBe("stopped");
+  });
+});
+
+describe("scoped keys", () => {
+  it("joins without registering the agents, with the tools and gard as usual", async () => {
+    const agent = defineAgent({ name: "bot", tools: [echo] });
+    const { worker, api } = makeWorker(agent, {
+      apiKey: "nrnw_box",
+      gard: 7,
+      claimToken: "tok",
+      capabilities: ["tools"],
+    });
+    await worker.start();
+
+    expect(api.requests).toEqual([]);
+    const ws = FakeWebSocket.last;
+    expect(ws.url).toBe("ws://norns.test/worker/websocket?token=nrnw_box&vsn=2.0.0");
+    expect(ws.joinPayload()).toMatchObject({
+      gard: 7,
+      claim_token: "tok",
+      capabilities: ["tools"],
+      tools: [expect.objectContaining({ name: "echo" })],
+    });
+    expect(worker.state).toBe("running");
+    await worker.stop();
+  });
+
+  it("a tenant key still registers", async () => {
+    const { worker, api } = makeWorker(defineAgent({ name: "bot" }), { apiKey: "nrn_tenant" });
+    await worker.start();
+    expect(api.requests.map((r) => r.method)).toEqual(["GET", "POST"]);
+    await worker.stop();
   });
 });
 

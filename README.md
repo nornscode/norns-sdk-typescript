@@ -90,6 +90,12 @@ execute: async ({ port }, ctx) => {
 
 A fatally rejected claim (bad token, destroyed gard) rejects `start()` with `JoinError` instead of reconnect-looping. If the gard is destroyed while the worker is connected, `worker.stopped` rejects with `GardDestroyedError`.
 
+A worker inside a gard should hold a [scoped key](https://github.com/nornscode/norns/blob/main/docs/gards.md#scoped-worker-keys) (`nrnw_...`) rather than the tenant key: it can join the worker socket, claim its gard and serve tasks, and nothing else. With one, `start()` skips the agent registration, since the key cannot reach the REST API; register the definitions with a tenant key instead. Pass `capabilities: ["tools"]` for a worker with no LLM access, matching what the key allows. If the key is revoked while the worker is connected, `worker.stopped` rejects with `KeyRevokedError`.
+
+```ts
+const worker = new NornsWorker({ agents: [coder], gard: 3, claimToken: "tok_...", capabilities: ["tools"] });
+```
+
 ### Shutdown
 
 On SIGTERM or SIGINT the worker drains instead of dying mid-task: it tells Norns to stop sending it work, finishes the tasks it holds, reports their results, leaves the channel, and the process exits. Tasks still running after `shutdownTimeoutMs` (default 30 seconds, or `NORNS_SHUTDOWN_TIMEOUT` in seconds) are dropped and Norns re-dispatches them. A second signal exits at once.

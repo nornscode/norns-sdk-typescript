@@ -2,6 +2,16 @@
 
 All notable changes to `norns-sdk` are documented in this file.
 
+## [0.3.0] - 2026-10-22
+
+### Added
+- A worker holding a scoped key (`nrnw_...`, issued for one gard's worker)
+  skips the agent registration on `start()`, since the key cannot reach the
+  REST API; the definitions are registered with a tenant key instead.
+  `isScopedKey()` is exported.
+- `KeyRevokedError`: `worker.stopped` rejects with it when Norns revokes the
+  key the worker joined on.
+
 ## [0.2.0] - 2026-10-16
 
 ### Added
