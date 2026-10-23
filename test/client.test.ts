@@ -191,7 +191,12 @@ describe("runs", () => {
     expect((await client.runs.list({ status: "waiting", agentId: 7 })).map((r) => r.id)).toEqual([
       1,
     ]);
+    // The server does the filtering; the params go on the wire.
     expect(api.requests.at(-1)?.path).toBe("/api/v1/runs");
+    expect(api.requests.at(-1)?.query).toBe("?limit=50&status=waiting&agent_id=7");
+
+    await client.runs.list();
+    expect(api.requests.at(-1)?.query).toBe("?limit=50");
   });
 
   it("surfaces API errors with their message", async () => {
