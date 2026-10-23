@@ -2,6 +2,13 @@
 
 All notable changes to `norns-sdk` are documented in this file.
 
+## [0.4.0] - 2026-10-23
+
+### Changed
+- `mode` is no longer sent on agent registration and is deprecated on
+  `defineAgent()`. Norns never read it: a conversation starts from a
+  `conversationKey` on the message, not from the definition.
+
 ## [0.3.0] - 2026-10-22
 
 ### Added

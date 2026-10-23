@@ -14,7 +14,6 @@ describe("defineAgent()", () => {
   it("fills in defaults", () => {
     const agent = defineAgent({ name: "bot" });
     expect(agent.model).toBe("claude-sonnet-5");
-    expect(agent.mode).toBe("task");
     expect(agent.onFailure).toBe("retry_last_step");
     expect(agent.maxSteps).toBe(50);
     expect(agent.tools).toEqual([]);
@@ -43,7 +42,6 @@ describe("defineAgent()", () => {
       model: "openai/gpt-4o",
       systemPrompt: "You lead.",
       tools: [search],
-      mode: "conversation",
       allowedTools: ["search"],
       contextPolicy: { compactAt: 100_000, keep: 10 },
       maxTokens: 16_000,
@@ -58,7 +56,6 @@ describe("defineAgent()", () => {
       model: "openai/gpt-4o",
       max_steps: 50,
       model_config: {
-        mode: "conversation",
         checkpoint_policy: "on_tool_call",
         context_strategy: "sliding_window",
         context_window: 20,

@@ -1,5 +1,6 @@
 import type { ToolDefinition } from "./tool.js";
 
+/** @deprecated Norns never read it; a conversation starts from a `conversationKey` on the message. */
 export type AgentMode = "task" | "conversation";
 export type CheckpointPolicy = "every_step" | "on_tool_call" | "manual";
 export type ContextStrategy = "sliding_window" | "none";
@@ -33,6 +34,7 @@ export interface AgentOptions {
   systemPrompt?: string;
   /** What this worker serves for the agent (see `allowedTools` for what it is offered). */
   tools?: ToolDefinition[];
+  /** @deprecated Ignored. Norns never read it; send a message with a `conversationKey` instead. */
   mode?: AgentMode;
   checkpointPolicy?: CheckpointPolicy;
   contextStrategy?: ContextStrategy;
@@ -64,7 +66,6 @@ export interface AgentDefinition {
   readonly model: string;
   readonly systemPrompt: string;
   readonly tools: readonly ToolDefinition[];
-  readonly mode: AgentMode;
   readonly checkpointPolicy: CheckpointPolicy;
   readonly contextStrategy: ContextStrategy;
   readonly contextWindow: number;
@@ -127,7 +128,6 @@ export function defineAgent(options: AgentOptions): AgentDefinition {
     model: options.model ?? DEFAULT_MODEL,
     systemPrompt: options.systemPrompt ?? "",
     tools: Object.freeze([...tools]),
-    mode: options.mode ?? "task",
     checkpointPolicy: options.checkpointPolicy ?? "on_tool_call",
     contextStrategy: options.contextStrategy ?? "sliding_window",
     contextWindow: options.contextWindow ?? 20,
@@ -148,7 +148,6 @@ export function defineAgent(options: AgentOptions): AgentDefinition {
  */
 export function agentBody(agent: AgentDefinition): Record<string, unknown> {
   const modelConfig: Record<string, unknown> = {
-    mode: agent.mode,
     checkpoint_policy: agent.checkpointPolicy,
     context_strategy: agent.contextStrategy,
     context_window: agent.contextWindow,
