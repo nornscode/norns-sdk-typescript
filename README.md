@@ -44,7 +44,6 @@ const supportBot = defineAgent({
   model: "claude-sonnet-5",
   systemPrompt: "You are a customer support agent. Look up docs and help customers.",
   tools: [searchDocs, sendEmail],
-  mode: "conversation",
 });
 
 const worker = new NornsWorker({ agents: [supportBot] });
@@ -208,7 +207,6 @@ const agent = defineAgent({
   model: "claude-sonnet-5",
   systemPrompt: "You are helpful.",
   tools: [search, sendEmail],
-  mode: "conversation",              // "task" or "conversation"
   checkpointPolicy: "on_tool_call",  // "every_step", "on_tool_call", "manual"
   contextWindow: 20,
   maxSteps: 50,
