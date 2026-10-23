@@ -160,7 +160,7 @@ export async function nextResult(ws: FakeWebSocket, after = 0): Promise<Record<s
 export function fakeNornsApi(seed: Record<string, unknown>[] = []) {
   const agents = [...seed];
   const runs = new Map<number, Record<string, unknown>>();
-  const requests: { method: string; path: string; body: unknown }[] = [];
+  const requests: { method: string; path: string; query: string; body: unknown }[] = [];
   let nextId = agents.length + 1;
   let nextRun = 100;
 
@@ -177,7 +177,7 @@ export function fakeNornsApi(seed: Record<string, unknown>[] = []) {
       const method = init?.method ?? "GET";
       const body = init?.body ? JSON.parse(init.body as string) : undefined;
       const path = url.pathname;
-      requests.push({ method, path, body });
+      requests.push({ method, path, query: url.search, body });
 
       const scripted = api.scripted.get(`${method} ${path}`)?.shift();
       if (scripted) return json(scripted.status, scripted.body);

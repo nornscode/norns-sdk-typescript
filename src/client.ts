@@ -213,12 +213,16 @@ export class NornsClient {
      *       console.log(run.id, run.waitingFor?.question);
      *     }
      *
-     * `status` and `agentId` filter the page the server returned, so a
-     * narrow filter over a busy tenant may need a larger `limit`.
+     * `status` and `agentId` are sent to the server, which filters before
+     * applying `limit`. (A Norns older than the filters ignores them, so
+     * the page is filtered here as well.)
      */
     list: async (options: ListRunsOptions = {}): Promise<Run[]> => {
+      const query: Record<string, string | number> = { limit: options.limit ?? 50 };
+      if (options.status) query.status = options.status;
+      if (options.agentId !== undefined) query.agent_id = options.agentId;
       const res = await this.#request<{ data: Record<string, unknown>[] }>("GET", "/api/v1/runs", {
-        query: { limit: options.limit ?? 50 },
+        query,
       });
       let runs = res.data.map(parseRun);
       if (options.status) runs = runs.filter((r) => r.status === options.status);

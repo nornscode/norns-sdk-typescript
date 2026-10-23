@@ -2,6 +2,13 @@
 
 All notable changes to `norns-sdk` are documented in this file.
 
+## [0.4.1] - 2026-10-23
+
+### Changed
+- `runs.list()` sends `status` and `agentId` to the server, which filters
+  before applying `limit` (Norns ≥ the `GET /runs` filter change). The page
+  is still filtered locally for older servers.
+
 ## [0.4.0] - 2026-10-23
 
 ### Changed
