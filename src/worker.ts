@@ -265,7 +265,8 @@ export class NornsWorker {
   #connect(): Promise<void> {
     const socket = new Socket(`${wsBase(this.url)}/worker`, {
       params: { token: this.#apiKey },
-      logger: (kind, msg, data) => this.#logger.debug(`phoenix ${kind}: ${msg}`, data),
+      logger: (kind, msg, data) =>
+        this.#logger.debug(`phoenix ${kind}: ${redactToken(msg)}`, redactClaimToken(data)),
       ...(this.#transport
         ? { transport: this.#transport as SocketConnectOption["transport"] }
         : {}),
@@ -412,10 +413,14 @@ export class NornsWorker {
     // drain took effect, until the deadline.
     const deadline = Date.now() + this.#shutdownTimeoutMs;
     while (this.#inFlight.size > 0 && Date.now() < deadline) {
+      // Cancel the deadline timer once the tasks settle, or it holds the
+      // process open until the deadline.
+      const timer = new AbortController();
       await Promise.race([
         Promise.allSettled([...this.#inFlight].map((t) => t.done)),
-        sleep(deadline - Date.now()),
+        sleep(deadline - Date.now(), timer.signal).catch(() => {}),
       ]);
+      timer.abort();
     }
     if (this.#inFlight.size > 0) {
       this.#logger.warn(
@@ -676,4 +681,17 @@ export class NornsWorker {
     process.on("SIGINT", this.#signalHandler);
     process.on("SIGTERM", this.#signalHandler);
   }
+}
+
+// Phoenix logs the socket URL, token included, and the join payload, claim
+// token included; neither belongs in a log.
+function redactToken(msg: string): string {
+  return msg.replace(/([?&]token=)[^&\s]*/g, "$1[redacted]");
+}
+
+function redactClaimToken(data: unknown): unknown {
+  if (data && typeof data === "object" && "claim_token" in data) {
+    return { ...data, claim_token: "[redacted]" };
+  }
+  return data;
 }

@@ -107,6 +107,27 @@ describe("joining", () => {
     await worker.stop();
   });
 
+  it("keeps the API key and claim token out of the debug log", async () => {
+    const lines: string[] = [];
+    const record = (message: string, ...rest: unknown[]) => {
+      lines.push(`${message} ${JSON.stringify(rest)}`);
+    };
+    const logger = { debug: record, info: record, warn: record, error: record };
+    const { worker } = makeWorker(defineAgent({ name: "bot" }), {
+      gard: 3,
+      claimToken: "tok_secret",
+      logger,
+    });
+    await worker.start();
+    await worker.stop();
+    expect(lines.some((l) => l.includes("connected to"))).toBe(true);
+    expect(lines.some((l) => l.includes("phx_join"))).toBe(true);
+    for (const line of lines) {
+      expect(line).not.toContain("nrn_test");
+      expect(line).not.toContain("tok_secret");
+    }
+  });
+
   it("serves the union of several agents' tools, and a tools-only capability", async () => {
     const other = tool({ name: "other", description: "O.", execute: () => "" });
     const { worker } = makeWorker(
@@ -556,6 +577,25 @@ describe("shutdown", () => {
         .map((r) => r.task_id)
         .sort(),
     ).toEqual(["t1", "t2"]);
+  });
+
+  it("leaves no deadline timer behind once the drain finishes", async () => {
+    const { slow, started, state } = slowTool();
+    const { worker } = makeWorker(defineAgent({ name: "t", tools: [slow] }), {
+      shutdownTimeoutMs: 60_000,
+    });
+    const timers = () => process.getActiveResourcesInfo().filter((r) => r === "Timeout").length;
+    const before = timers();
+    await worker.start();
+    const ws = FakeWebSocket.last;
+    ws.push("tool_task", toolTask("t1", "slow"));
+    await started;
+    const stopping = worker.stop();
+    await waitFor(() => ws.events().includes("drain"));
+    state.release?.();
+    await stopping;
+    // Phoenix's own teardown timers are short; the drain deadline is 60 s.
+    await waitFor(() => timers() <= before, 3000);
   });
 
   it("drops what is still running at the deadline", async () => {

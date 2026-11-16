@@ -39,7 +39,6 @@ const supportBot = defineAgent({
   systemPrompt:
     "You are a customer support agent. Look orders up before answering, and ask for anything you are missing.",
   tools: [lookupOrder, sendEmail],
-  mode: "conversation",
 });
 
 const worker = new NornsWorker({ agents: [supportBot] });

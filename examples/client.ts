@@ -19,7 +19,7 @@ while (result.isWaiting) {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   const answer = await rl.question(`Agent asks: ${result.waitingFor?.question}\n> `);
   rl.close();
-  await client.runs.reply(result.runId, answer);
+  // A message to the agent answers the question it is parked on.
   result = await client.sendMessage("support-bot", answer, { conversationKey, wait: true });
 }
 console.log(`Run ${result.runId}: ${result.status}\n${result.output ?? ""}`);
